@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Zealand GDP Growth Dashboard (2024+)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-[#191919] text-[#dfdfdf] font-sans min-h-screen flex flex-col justify-between p-8">
+
+    <!-- Header -->
+    <header class="w-full max-w-7xl mx-auto py-3 border-b border-[#2f2f2f] flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-semibold tracking-tight text-[#fbfbfb]">NZD Gross Domestic Product (GDP)</h1>
+            <p class="text-xs text-[#9b9b9b]">Real Chain-Volume Percentage Change (2024 – Present)</p>
+        </div>
+    </header>
+
+    <!-- Main Content / Chart Container -->
+    <main class="w-full max-w-7xl mx-auto my-6 bg-[#202020] border border-[#2f2f2f] rounded-lg p-6 shadow-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-sm font-medium text-[#c8c8c8]">Economic Growth (Seasonally Adjusted QoQ Column & YoY Line)</h2>
+            <span class="text-xs text-[#7f7f7f]">Stats NZ Infoshare</span>
+        </div>
+        <div class="relative h-[540px] w-full">
+            <canvas id="gdpComboChart"></canvas>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-7xl mx-auto text-center text-xs text-[#666666] py-2">
+    </footer>
+
+    <!-- Chart Rendering & Logic -->
+    <script>
+        let myChart = null;
+
+        async function loadChartData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+
+                const labels = data.map(item => item.quarter);
+                const qoqValues = data.map(item => item.qoq); // Quarterly growth
+                const yoyValues = data.map(item => item.yoy); // Annual growth
+
+                const ctx = document.getElementById('gdpComboChart').getContext('2d');
+                
+                if (myChart) {
+                    myChart.destroy();
+                }
+
+                myChart = new Chart(ctx, {
+                    type: 'bar', // Base type is bar, allowing mixed datasets
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Quarterly growth (%)',
+                                data: qoqValues,
+                                backgroundColor: '#0e5a6e', // Deep Teal matching your reference
+                                borderColor: '#0e5a6e',
+                                borderWidth: 1,
+                                borderRadius: 2,
+                                barPercentage: 0.6
+                            },
+                            {
+                                type: 'line',
+                                label: 'Annual growth (%)',
+                                data: yoyValues,
+                                borderColor: '#d4af37',     // Gold matching your reference
+                                backgroundColor: '#d4af37',
+                                borderWidth: 2.5,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                tension: 0.2,
+                                order: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { 
+                                    color: '#d4d4d4', 
+                                    font: { size: 12, family: 'sans-serif' },
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: '#191919',
+                                titleColor: '#ffffff',
+                                bodyColor: '#dfdfdf',
+                                borderColor: '#333333',
+                                borderWidth: 1,
+                                padding: 12
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#9b9b9b', font: { size: 11 } }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#9b9b9b' },
+                                min: -3,
+                                max: 6
+                            }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error("Failed to load GDP chart data:", err);
+            }
+        }
+
+        // Initial load
+        loadChartData();
+    </script>
+</body>
+</html>
